@@ -332,6 +332,16 @@ namespace ts {
         getCurrentDirectory(): string;
         getCanonicalFileName(fileName: string): string;
         getNewLine(): string;
+        getDiagnosticCodeText?(diagnostic: Diagnostic): string;
+    }
+
+    function diagnosticCodeText(diagnostic: Diagnostic, host: FormatDiagnosticsHost): string {
+        // Only allow customization for third-party sourced diagnostics
+        if (diagnostic.source && host.getDiagnosticCodeText) {
+            return host.getDiagnosticCodeText(diagnostic);
+        } else {
+            return `TS${diagnostic.code}`;
+        }
     }
 
     export function formatDiagnostics(diagnostics: readonly Diagnostic[], host: FormatDiagnosticsHost): string {
@@ -344,7 +354,7 @@ namespace ts {
     }
 
     export function formatDiagnostic(diagnostic: Diagnostic, host: FormatDiagnosticsHost): string {
-        const errorMessage = `${diagnosticCategoryName(diagnostic)} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, host.getNewLine())}${host.getNewLine()}`;
+        const errorMessage = `${diagnosticCategoryName(diagnostic)} ${diagnosticCodeText(diagnostic, host)}: ${flattenDiagnosticMessageText(diagnostic.messageText, host.getNewLine())}${host.getNewLine()}`;
 
         if (diagnostic.file) {
             const { line, character } = getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start!); // TODO: GH#18217
@@ -469,7 +479,7 @@ namespace ts {
             }
 
             output += formatColorAndReset(diagnosticCategoryName(diagnostic), getCategoryFormat(diagnostic.category));
-            output += formatColorAndReset(` TS${diagnostic.code}: `, ForegroundColorEscapeSequences.Grey);
+            output += formatColorAndReset(` ${diagnosticCodeText(diagnostic, host)}: `, ForegroundColorEscapeSequences.Grey);
             output += flattenDiagnosticMessageText(diagnostic.messageText, host.getNewLine());
 
             if (diagnostic.file) {
