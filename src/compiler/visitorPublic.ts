@@ -35,6 +35,9 @@ namespace ts {
         }
         else if (isArray(visited)) {
             visitedNode = (lift || extractSingleNode)(visited);
+            if (visitedNode === undefined) {
+                return undefined;
+            }
         }
         else {
             visitedNode = visited;
